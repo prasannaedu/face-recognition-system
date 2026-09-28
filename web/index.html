@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Face Recognition System</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">FRS</div>
+        <div>
+          <h1>Face Recognition System</h1>
+          <p class="subtitle">1:N identification · InsightFace ArcFace · cosine similarity</p>
+        </div>
+      </div>
+      <span class="phase-badge" id="phaseBadge">Demo · provisional threshold</span>
+    </header>
+
+    <main class="grid">
+      <!-- LEFT: upload / control panel -->
+      <section class="card upload-card">
+        <h2 class="card-title">Recognize a face</h2>
+
+        <label class="dropzone" id="dropzone" for="fileInput">
+          <input type="file" id="fileInput" accept="image/*" hidden />
+          <div class="dropzone-inner" id="dropzoneInner">
+            <div class="dz-icon">＋</div>
+            <p class="dz-text">Click to upload a face image</p>
+            <p class="dz-hint">JPG or PNG · one clear face</p>
+          </div>
+          <img id="previewImg" class="preview" alt="preview" hidden />
+        </label>
+
+        <p class="filename" id="fileName"></p>
+
+        <button class="btn-primary" id="recognizeBtn" disabled>
+          <span id="btnLabel">Recognize Face</span>
+          <span class="spinner" id="btnSpinner" hidden></span>
+        </button>
+
+        <p class="hint-note">
+          Match score is a <strong>cosine similarity</strong> (−1 to 1), not an accuracy percentage.
+        </p>
+      </section>
+
+      <!-- RIGHT: results -->
+      <section class="card result-card">
+        <!-- Empty / idle state -->
+        <div class="state-block" id="idleState">
+          <div class="ghost-icon">◎</div>
+          <p>Upload a face image and click <strong>Recognize Face</strong> to see the result.</p>
+        </div>
+
+        <!-- Error state -->
+        <div class="state-block error-block" id="errorState" hidden>
+          <div class="ghost-icon">⚠</div>
+          <p id="errorMessage">Something went wrong.</p>
+        </div>
+
+        <!-- Result state -->
+        <div id="resultState" hidden>
+          <div class="verdict">
+            <span class="status-pill" id="statusPill">MATCH</span>
+            <div class="identity" id="identityText">person_a</div>
+            <div class="score-line">
+              Match score <strong id="matchScore">0.000</strong>
+              <span class="muted">cosine similarity</span>
+            </div>
+          </div>
+
+          <!-- Side-by-side: query face -> matched enrolled photo -->
+          <div class="compare">
+            <figure class="compare-item">
+              <img id="faceCrop" class="compare-img" alt="detected face" />
+              <figcaption>Query · detected face</figcaption>
+            </figure>
+
+            <div class="compare-arrow">→</div>
+
+            <figure class="compare-item" id="matchedItem">
+              <img id="matchedCrop" class="compare-img" alt="matched person" />
+              <figcaption id="matchedCaption">person_a · 0.000</figcaption>
+            </figure>
+
+            <div class="compare-item nomatch" id="noMatchItem" hidden>
+              <div class="nomatch-box">No match<br />in gallery</div>
+              <figcaption>UNKNOWN</figcaption>
+            </div>
+          </div>
+
+          <h3 class="section-label">Top matches</h3>
+          <table class="matches">
+            <thead>
+              <tr><th>#</th><th>Identity</th><th>Score</th></tr>
+            </thead>
+            <tbody id="matchesBody"></tbody>
+          </table>
+
+          <h3 class="section-label">Technical details</h3>
+          <div class="metrics">
+            <div class="metric"><span class="m-label">Threshold</span><span class="m-value" id="mThreshold">0.400</span></div>
+            <div class="metric"><span class="m-label">Match gap</span><span class="m-value" id="mGap">0.000</span></div>
+            <div class="metric"><span class="m-label">Detection confidence</span><span class="m-value" id="mConf">0.000</span></div>
+            <div class="metric"><span class="m-label">Faces found</span><span class="m-value" id="mFaces">1</span></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      Pretrained ArcFace (buffalo_l) · gallery search reused from the Person Re-ID architecture ·
+      not production-ready
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

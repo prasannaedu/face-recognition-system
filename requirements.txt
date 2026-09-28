@@ -1,0 +1,10 @@
+# Core ML pipeline (already installed in .venv during Phase 1/2)
+numpy
+opencv-python-headless
+onnxruntime
+insightface
+
+# Web demo (added in the frontend/backend phase)
+fastapi
+uvicorn[standard]
+python-multipart
