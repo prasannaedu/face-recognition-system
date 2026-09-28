@@ -2,3 +2,4 @@
 test_images/
 __pycache__/
 *.npy
+gallery/
