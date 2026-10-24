@@ -18,10 +18,15 @@ def _check_id(person_id: str) -> None:
         )
 
 
-def enroll(person_id: str, embedding: np.ndarray, crop: np.ndarray) -> int:
-    """Save one embedding + face crop for a person. Returns the new index."""
+def enroll(person_id: str, embedding: np.ndarray, crop: np.ndarray,
+           gallery_dir=None) -> int:
+    """Save one embedding + face crop for a person. Returns the new index.
+
+    gallery_dir is optional: leave it out to use the normal gallery/ folder
+    (unchanged behaviour); give a folder to enroll somewhere else.
+    """
     _check_id(person_id)
-    person_dir = GALLERY_DIR / person_id
+    person_dir = (Path(gallery_dir) if gallery_dir else GALLERY_DIR) / person_id
     person_dir.mkdir(parents=True, exist_ok=True)
 
     index = len(list(person_dir.glob("emb_*.npy")))
@@ -41,13 +46,17 @@ def enroll(person_id: str, embedding: np.ndarray, crop: np.ndarray) -> int:
     return index
 
 
-def load_gallery() -> dict:
-    """Load every enrolled person: {person_id: array of shape (n, 512)}."""
+def load_gallery(gallery_dir=None) -> dict:
+    """Load every enrolled person: {person_id: array of shape (n, 512)}.
+
+    gallery_dir is optional: leave it out to read the normal gallery/ folder.
+    """
+    base = Path(gallery_dir) if gallery_dir else GALLERY_DIR
     gallery = {}
-    if not GALLERY_DIR.exists():
+    if not base.exists():
         return gallery
 
-    for person_dir in sorted(GALLERY_DIR.iterdir()):
+    for person_dir in sorted(base.iterdir()):
         if not person_dir.is_dir():
             continue
         files = sorted(person_dir.glob("emb_*.npy"))

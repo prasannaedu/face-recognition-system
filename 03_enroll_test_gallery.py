@@ -22,9 +22,15 @@ for person_id, path in to_enroll.items():
         print(f"{person_id}: could not read {path}")
         continue
 
-    result = extract_best_face(img)
+    result = extract_best_face(img, quality_check=True)
     if result is None:
         print(f"{person_id}: no face found in {path}")
+        continue
+
+    # Only enroll faces that pass the quality check (angle, blur, detection).
+    if not result["quality"]["passed"]:
+        print(f"{person_id}: NOT enrolled, poor quality: "
+              + "; ".join(result["quality"]["reasons"]))
         continue
 
     index = enroll(person_id, result["embedding"], result["crop"])

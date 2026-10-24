@@ -3,3 +3,5 @@ test_images/
 __pycache__/
 *.npy
 gallery/
+videos/
+quality_out/

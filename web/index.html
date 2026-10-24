@@ -3,116 +3,309 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Face Recognition System</title>
+  <title>Face Recognition System (FRS) · Biometric 1:N Dashboard</title>
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="app">
+  <div class="app-container">
+    <!-- Top Bar Navigation -->
     <header class="topbar">
-      <div class="brand">
-        <div class="logo">FRS</div>
+      <div class="brand-group">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+            <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+            <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+            <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+            <circle cx="12" cy="12" r="3" />
+            <path d="M9 10h.01" />
+            <path d="M15 10h.01" />
+            <path d="M9.5 15a3.5 3.5 0 0 0 5 0" />
+          </svg>
+        </div>
         <div>
-          <h1>Face Recognition System</h1>
-          <p class="subtitle">1:N identification · InsightFace ArcFace · cosine similarity</p>
+          <div class="brand-title">Face Recognition System <span class="tag-version">FRS v0.1</span></div>
+          <div class="brand-subtitle">1:N Identification · InsightFace ArcFace (512-D) · Cosine Search · MaxMember</div>
         </div>
       </div>
-      <span class="phase-badge" id="phaseBadge">Demo · provisional threshold</span>
+
+      <div class="system-status-pills">
+        <div class="status-indicator">
+          <span class="status-dot"></span>
+          <span id="backendStatus">API Ready</span>
+        </div>
+        <div class="status-pill-info">
+          <span>Threshold:</span> <strong>0.400</strong> <span class="badge-sub">Provisional</span>
+        </div>
+        <div class="status-pill-info">
+          <span>Gallery:</span> <strong id="galleryCount">3 Identities</strong>
+        </div>
+      </div>
     </header>
 
-    <main class="grid">
-      <!-- LEFT: upload / control panel -->
-      <section class="card upload-card">
-        <h2 class="card-title">Recognize a face</h2>
+    <!-- Main Workspace Layout -->
+    <main class="dashboard-grid">
+      <!-- LEFT COLUMN: Input & Test Controls -->
+      <section class="card input-card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span class="icon-bubble">1</span> Query Image Input
+          </h2>
+          <span class="card-badge">SCRFD 640×640</span>
+        </div>
 
+        <!-- Dropzone / File Picker -->
         <label class="dropzone" id="dropzone" for="fileInput">
-          <input type="file" id="fileInput" accept="image/*" hidden />
-          <div class="dropzone-inner" id="dropzoneInner">
-            <div class="dz-icon">＋</div>
-            <p class="dz-text">Click to upload a face image</p>
-            <p class="dz-hint">JPG or PNG · one clear face</p>
+          <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" hidden />
+          <div class="dropzone-prompt" id="dropzonePrompt">
+            <div class="upload-reticle">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+            </div>
+            <p class="dropzone-main-text">Drop face photo here or <span class="text-accent">Browse</span></p>
+            <p class="dropzone-sub-text">Supports JPG, PNG · Single clear frontal face</p>
           </div>
-          <img id="previewImg" class="preview" alt="preview" hidden />
+
+          <!-- Uploaded Image Preview -->
+          <div class="preview-container" id="previewContainer" hidden>
+            <img id="previewImg" class="query-preview-img" alt="Uploaded Query Preview" />
+            <div class="preview-overlay">
+              <span class="preview-badge" id="previewFileName">face.jpg</span>
+              <button type="button" class="btn-clear-preview" id="btnClearPreview" title="Remove photo">✕</button>
+            </div>
+          </div>
         </label>
 
-        <p class="filename" id="fileName"></p>
+        <!-- Quick 1-Click Demo Samples Tray -->
+        <div class="samples-section">
+          <div class="samples-title-row">
+            <span class="samples-label">⚡ 1-Click Test Samples</span>
+            <span class="samples-hint">From benchmark test set</span>
+          </div>
+          <div class="samples-tray" id="samplesTray">
+            <button type="button" class="sample-chip" data-file="face-2.jpeg" data-label="Rahul (Query · Person A)">
+              <span class="chip-dot held-back"></span>
+              <span class="chip-name">Rahul (face-2)</span>
+              <span class="chip-badge">Held-Back</span>
+            </button>
+            <button type="button" class="sample-chip" data-file="face-5.jpeg" data-label="Person C (Query)">
+              <span class="chip-dot held-back"></span>
+              <span class="chip-name">Person C (face-5)</span>
+              <span class="chip-badge">Held-Back</span>
+            </button>
+            <button type="button" class="sample-chip" data-file="face3.jpeg" data-label="Person B (Enrolled)">
+              <span class="chip-dot enrolled"></span>
+              <span class="chip-name">Person B (face3)</span>
+              <span class="chip-badge">Enrolled</span>
+            </button>
+            <button type="button" class="sample-chip" data-file="face1.jpeg" data-label="Rahul (Enrolled)">
+              <span class="chip-dot enrolled"></span>
+              <span class="chip-name">Rahul (face1)</span>
+              <span class="chip-badge">Enrolled</span>
+            </button>
+          </div>
+        </div>
 
+        <!-- Action Button -->
         <button class="btn-primary" id="recognizeBtn" disabled>
-          <span id="btnLabel">Recognize Face</span>
-          <span class="spinner" id="btnSpinner" hidden></span>
+          <span class="btn-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 12h5" />
+              <path d="M17 12h5" />
+              <path d="M12 2v5" />
+              <path d="M12 17v5" />
+              <circle cx="12" cy="12" r="7" />
+            </svg>
+          </span>
+          <span id="btnLabel">Run Face Recognition</span>
+          <span class="btn-spinner" id="btnSpinner" hidden></span>
         </button>
 
-        <p class="hint-note">
-          Match score is a <strong>cosine similarity</strong> (−1 to 1), not an accuracy percentage.
-        </p>
+        <!-- Technical Disclaimer Callout -->
+        <div class="notice-callout">
+          <div class="notice-icon">ℹ️</div>
+          <div class="notice-body">
+            <strong>Technical Metric Notice:</strong><br />
+            Match Score is a <strong>Cosine Similarity</strong> metric (−1.000 to +1.000), <strong>not</strong> an accuracy percentage. Scores $\ge 0.400$ are classified as <span class="text-match">MATCH</span>.
+          </div>
+        </div>
       </section>
 
-      <!-- RIGHT: results -->
-      <section class="card result-card">
-        <!-- Empty / idle state -->
-        <div class="state-block" id="idleState">
-          <div class="ghost-icon">◎</div>
-          <p>Upload a face image and click <strong>Recognize Face</strong> to see the result.</p>
+      <!-- RIGHT COLUMN: Recognition Output & Technical Inspection -->
+      <section class="card results-card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span class="icon-bubble">2</span> Biometric Analysis & Match Output
+          </h2>
+          <span class="card-badge" id="latencyBadge">Awaiting Input</span>
         </div>
 
-        <!-- Error state -->
-        <div class="state-block error-block" id="errorState" hidden>
-          <div class="ghost-icon">⚠</div>
-          <p id="errorMessage">Something went wrong.</p>
+        <!-- State 1: Idle Placeholder -->
+        <div class="state-container" id="idleState">
+          <div class="biometric-hologram">
+            <svg viewBox="0 0 100 100" class="hologram-svg">
+              <circle cx="50" cy="50" r="45" stroke="currentColor" stroke-width="1.5" stroke-dasharray="6 4" fill="none" />
+              <circle cx="50" cy="50" r="32" stroke="currentColor" stroke-width="1" fill="none" opacity="0.6" />
+              <path d="M 35 45 Q 50 35 65 45" stroke="currentColor" stroke-width="1.5" fill="none" />
+              <circle cx="40" cy="48" r="2.5" fill="currentColor" />
+              <circle cx="60" cy="48" r="2.5" fill="currentColor" />
+              <path d="M 50 50 L 50 62 L 53 62" stroke="currentColor" stroke-width="1.5" fill="none" />
+              <path d="M 40 72 Q 50 80 60 72" stroke="currentColor" stroke-width="1.5" fill="none" />
+            </svg>
+          </div>
+          <h3 class="state-title">Ready for Identification</h3>
+          <p class="state-desc">Select an image from the 1-Click Samples or upload a custom face photo to execute 1:N biometric gallery search.</p>
         </div>
 
-        <!-- Result state -->
-        <div id="resultState" hidden>
-          <div class="verdict">
-            <span class="status-pill" id="statusPill">MATCH</span>
-            <div class="identity" id="identityText">person_a</div>
-            <div class="score-line">
-              Match score <strong id="matchScore">0.000</strong>
-              <span class="muted">cosine similarity</span>
+        <!-- State 2: Processing Animation -->
+        <div class="state-container" id="loadingState" hidden>
+          <div class="scanning-reticle">
+            <div class="scan-beam"></div>
+            <div class="radar-circle"></div>
+          </div>
+          <h3 class="state-title">Executing Biometric Pipeline</h3>
+          <div class="pipeline-steps">
+            <div class="pipeline-step active">1. SCRFD Face & 5-Landmark Detection</div>
+            <div class="pipeline-step active">2. 112×112 Canonical Alignment</div>
+            <div class="pipeline-step active">3. ArcFace 512-D Embedding Extraction</div>
+            <div class="pipeline-step active">4. Gallery Cosine Similarity & MaxMember Search</div>
+          </div>
+        </div>
+
+        <!-- State 3: Error Message -->
+        <div class="state-container error-state" id="errorState" hidden>
+          <div class="error-icon-box">⚠</div>
+          <h3 class="state-title" id="errorTitle">Recognition Notice</h3>
+          <p class="state-desc" id="errorMessage">An error occurred during recognition.</p>
+          <button type="button" class="btn-secondary" id="btnRetry">Try Another Photo</button>
+        </div>
+
+        <!-- State 4: Match / Verification Result -->
+        <div class="result-layout" id="resultState" hidden>
+          <!-- Verdict Hero Banner -->
+          <div class="verdict-banner" id="verdictBanner">
+            <div class="verdict-left">
+              <span class="status-pill" id="statusPill">MATCH</span>
+              <div class="verdict-identity" id="identityText">person_a</div>
+              <div class="verdict-subtext" id="verdictSubtext">Identified in Enrolled Gallery</div>
+            </div>
+            <div class="verdict-score-block">
+              <span class="score-caption">Match Score (Cosine)</span>
+              <div class="score-hero" id="matchScore">0.892</div>
+              <span class="score-subnote">Range: −1.000 to +1.000</span>
             </div>
           </div>
 
-          <!-- Side-by-side: query face -> matched enrolled photo -->
-          <div class="compare">
-            <figure class="compare-item">
-              <img id="faceCrop" class="compare-img" alt="detected face" />
-              <figcaption>Query · detected face</figcaption>
-            </figure>
+          <!-- Side-by-Side Face Verification Card -->
+          <div class="verification-panel">
+            <div class="face-card">
+              <div class="face-wrapper">
+                <img id="queryFaceCrop" class="face-crop-img" alt="Detected Query Face" />
+                <span class="face-tag">Detected Face</span>
+              </div>
+              <div class="face-caption">
+                <strong>Query Crop</strong>
+                <span id="queryConfidence">Conf: 0.890</span>
+              </div>
+            </div>
 
-            <div class="compare-arrow">→</div>
+            <div class="comparison-connector">
+              <div class="connector-line"></div>
+              <div class="connector-badge" id="connectorScore">0.892</div>
+              <div class="connector-arrow">➔</div>
+            </div>
 
-            <figure class="compare-item" id="matchedItem">
-              <img id="matchedCrop" class="compare-img" alt="matched person" />
-              <figcaption id="matchedCaption">person_a · 0.000</figcaption>
-            </figure>
+            <div class="face-card" id="matchedFaceCard">
+              <div class="face-wrapper">
+                <img id="enrolledFaceCrop" class="face-crop-img" alt="Enrolled Reference Face" />
+                <span class="face-tag enrolled-tag">Gallery Reference</span>
+              </div>
+              <div class="face-caption">
+                <strong id="enrolledPersonName">person_a</strong>
+                <span>Enrolled Identity</span>
+              </div>
+            </div>
 
-            <div class="compare-item nomatch" id="noMatchItem" hidden>
-              <div class="nomatch-box">No match<br />in gallery</div>
-              <figcaption>UNKNOWN</figcaption>
+            <div class="face-card unknown-card" id="unknownFaceCard" hidden>
+              <div class="face-wrapper empty-wrapper">
+                <div class="unknown-avatar">?</div>
+                <span class="face-tag unknown-tag">No Gallery Match</span>
+              </div>
+              <div class="face-caption">
+                <strong>UNKNOWN</strong>
+                <span>Below 0.400 Threshold</span>
+              </div>
             </div>
           </div>
 
-          <h3 class="section-label">Top matches</h3>
-          <table class="matches">
-            <thead>
-              <tr><th>#</th><th>Identity</th><th>Score</th></tr>
-            </thead>
-            <tbody id="matchesBody"></tbody>
-          </table>
+          <!-- Top-K Ranked Matches Table -->
+          <div class="section-block">
+            <div class="section-header-row">
+              <h3 class="section-title">Top-3 Gallery Candidates</h3>
+              <span class="section-note">Ranked by MaxMember Cosine Similarity</span>
+            </div>
+            <div class="matches-table-wrapper">
+              <table class="matches-table">
+                <thead>
+                  <tr>
+                    <th style="width: 10%;">Rank</th>
+                    <th style="width: 35%;">Identity</th>
+                    <th style="width: 35%;">Similarity Distribution</th>
+                    <th style="width: 20%; text-align: right;">Score</th>
+                  </tr>
+                </thead>
+                <tbody id="matchesTableBody">
+                  <!-- Injected via JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-          <h3 class="section-label">Technical details</h3>
-          <div class="metrics">
-            <div class="metric"><span class="m-label">Threshold</span><span class="m-value" id="mThreshold">0.400</span></div>
-            <div class="metric"><span class="m-label">Match gap</span><span class="m-value" id="mGap">0.000</span></div>
-            <div class="metric"><span class="m-label">Detection confidence</span><span class="m-value" id="mConf">0.000</span></div>
-            <div class="metric"><span class="m-label">Faces found</span><span class="m-value" id="mFaces">1</span></div>
+          <!-- Technical Metrics & Calibration Diagnostics -->
+          <div class="section-block">
+            <h3 class="section-title">Technical Diagnostics & Calibration</h3>
+            <div class="metrics-grid">
+              <div class="metric-card">
+                <span class="metric-label">Provisional Threshold</span>
+                <span class="metric-val" id="metricThreshold">0.400</span>
+                <span class="metric-hint">Decision boundary</span>
+              </div>
+              <div class="metric-card">
+                <span class="metric-label">Match Gap (Δ Margin)</span>
+                <span class="metric-val text-accent" id="metricGap">0.776</span>
+                <span class="metric-hint">Top vs #2 Runner-up</span>
+              </div>
+              <div class="metric-card">
+                <span class="metric-label">SCRFD Confidence</span>
+                <span class="metric-val" id="metricConf">0.890</span>
+                <span class="metric-hint">Face detector score</span>
+              </div>
+              <div class="metric-card">
+                <span class="metric-label">Faces in Frame</span>
+                <span class="metric-val" id="metricFaces">1</span>
+                <span class="metric-hint">Selected largest crop</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
     </main>
 
-    <footer class="footer">
-      Pretrained ArcFace (buffalo_l) · gallery search reused from the Person Re-ID architecture ·
-      not production-ready
+    <!-- Footer Documentation -->
+    <footer class="app-footer">
+      <div class="footer-left">
+        <span>Pretrained InsightFace <code>buffalo_l</code> · SCRFD Detection · 112×112 Similarity Transform · ArcFace ResNet-50</span>
+      </div>
+      <div class="footer-right">
+        <span>Extended from Person Re-ID Pipeline · Proof of Concept</span>
+      </div>
     </footer>
   </div>
 

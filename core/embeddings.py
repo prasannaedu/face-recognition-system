@@ -1,9 +1,11 @@
 import numpy as np
 
 from core.models import get_face_app
+from core.quality import assess_quality
 
 
-def extract_best_face(img_bgr: np.ndarray, use_gpu: bool = False):
+def extract_best_face(img_bgr: np.ndarray, use_gpu: bool = False,
+                      quality_check: bool = False):
     """Detect faces in an image and return data for the largest one.
 
     Returns None if no face is found. Otherwise a dict with:
@@ -12,6 +14,10 @@ def extract_best_face(img_bgr: np.ndarray, use_gpu: bool = False):
       bbox      : [x1, y1, x2, y2] in pixels
       crop      : face crop with a small margin, for humans to look at
       num_faces : how many faces were found in the image
+      kps       : the 5 landmarks, shape (5, 2)
+      quality   : only when quality_check=True; see core/quality.py.
+                  Nothing is rejected here: the caller checks
+                  result["quality"]["passed"] and decides.
     """
     app = get_face_app(use_gpu)
     faces = app.get(img_bgr)  # detect -> align -> embed, all in one call
@@ -35,10 +41,14 @@ def extract_best_face(img_bgr: np.ndarray, use_gpu: bool = False):
     cy2 = min(h, y2 + margin_y)
     crop = img_bgr[cy1:cy2, cx1:cx2].copy()
 
-    return {
+    result = {
         "embedding": face.normed_embedding,
         "det_score": float(face.det_score),
         "bbox": [int(x1), int(y1), int(x2), int(y2)],
         "crop": crop,
         "num_faces": len(faces),
+        "kps": face.kps,
     }
+    if quality_check:
+        result["quality"] = assess_quality(img_bgr, face)
+    return result

@@ -29,20 +29,17 @@ _VALID_ID = re.compile(r"^[A-Za-z0-9_-]+$")
 
 # Mirrors the PROVISIONAL threshold in 04_recognize.py. Same value, same meaning:
 # it only demonstrates the MATCH / UNKNOWN boundary and will be calibrated on
-# real footage later. We define it here (rather than importing 04_recognize.py,
-# which runs recognition at import time) so importing this module has no side
-# effects.
+# real footage later.
 THRESHOLD = 0.4
 TOP_K = 3
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 WEB_DIR = PROJECT_ROOT / "web"
+TEST_IMAGES_DIR = PROJECT_ROOT / "test_images"
 
 app = FastAPI(title="Face Recognition System", version="0.1.0")
 
-# Load the gallery once at startup and reuse it for every request, so we do not
-# re-read the .npy files on each call. The InsightFace model itself is already
-# cached inside core.models.get_face_app().
+# Load the gallery once at startup and reuse it for every request.
 _GALLERY = load_gallery()
 
 
@@ -52,11 +49,7 @@ def _error(status_code: int, code: str, message: str) -> JSONResponse:
 
 
 def _crop_to_data_url(crop: np.ndarray) -> str | None:
-    """Encode the detected face crop as a base64 JPEG data URL for preview.
-
-    Only the human-viewable crop is sent — never the 512-D embedding and never
-    any filesystem path.
-    """
+    """Encode the detected face crop as a base64 JPEG data URL for preview."""
     ok, buf = cv2.imencode(".jpg", crop)
     if not ok:
         return None
@@ -67,16 +60,42 @@ def _crop_to_data_url(crop: np.ndarray) -> str | None:
 @app.get("/api/health")
 def health() -> dict:
     """Simple check: is the server up and how many identities are enrolled?"""
-    return {"status": "ok", "enrolled_identities": sorted(_GALLERY.keys())}
+    return {
+        "status": "ok",
+        "enrolled_identities": sorted(_GALLERY.keys()),
+        "threshold": THRESHOLD,
+        "model": "InsightFace buffalo_l (SCRFD + ArcFace 512-D)"
+    }
+
+
+@app.get("/api/samples")
+def get_samples():
+    """Provide curated test samples for quick 1-click testing in the UI."""
+    if not TEST_IMAGES_DIR.exists():
+        return []
+    catalog = [
+        {"filename": "face-2.jpeg", "label": "Rahul (Query · Person A)", "expected": "person_a", "tag": "Held-back Test"},
+        {"filename": "face-5.jpeg", "label": "Person C (Query)", "expected": "person_c", "tag": "Held-back Test"},
+        {"filename": "face3.jpeg", "label": "Person B (Enrolled)", "expected": "person_b", "tag": "Gallery Photo"},
+        {"filename": "face1.jpeg", "label": "Rahul (Enrolled)", "expected": "person_a", "tag": "Gallery Photo"},
+        {"filename": "face-4.jpeg", "label": "Person C (Enrolled)", "expected": "person_c", "tag": "Gallery Photo"},
+    ]
+    return [s for s in catalog if (TEST_IMAGES_DIR / s["filename"]).exists()]
+
+
+@app.get("/api/samples/{filename}")
+def get_sample_file(filename: str):
+    """Serve a sample test image safely."""
+    safe_name = Path(filename).name
+    file_path = TEST_IMAGES_DIR / safe_name
+    if not file_path.exists() or not file_path.is_file():
+        return _error(404, "not_found", "Sample image not found.")
+    return FileResponse(str(file_path), media_type="image/jpeg")
 
 
 @app.get("/gallery/{person_id}/crop")
 def gallery_crop(person_id: str):
-    """Serve the enrolled reference face crop for one person.
-
-    Used by the UI to show the matched person's stored photo next to the query.
-    Only the human-viewable crop is served — never the embedding.
-    """
+    """Serve the enrolled reference face crop for one person."""
     if not _VALID_ID.match(person_id):
         return _error(400, "bad_id", "Invalid person id.")
 
